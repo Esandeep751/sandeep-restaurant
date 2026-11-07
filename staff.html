@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Portal - Sandeep Restaurant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Staff Dashboard</h1>
+                <p>Manage Table Reservations and Status</p>
+            </div>
+            <img src="PXL_20251025_092026797.MP.jpg" alt="Sandeep Restaurant Logo" class="header-logo">[cite: 1]
+        </header>
+
+        <div class="card">
+            <h2>All Reservations</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Table</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Guests</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="reservations-list">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadReservations() {
+            const res = await fetch('/api/staff/reservations');
+            const list = await res.json();
+            const tbody = document.getElementById('reservations-list');
+            tbody.innerHTML = '';
+            
+            list.forEach(r => {
+                const formattedDate = new Date(r.reservation_date).toLocaleDateString();
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${r.reservation_id}</td>
+                        <td>${r.customer_name}</td>
+                        <td>${r.phone}</td>
+                        <td>${r.table_number}</td>
+                        <td>${formattedDate}</td>
+                        <td>${r.reservation_time}</td>
+                        <td>${r.guests}</td>
+                        <td><span class="status-${r.status.toLowerCase()}">${r.status}</span></td>
+                        <td>
+                            <select onchange="updateStatus(${r.reservation_id}, this.value)">
+                                <option value="">Change Status</option>
+                                <option value="Confirmed">Confirm</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancel</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function updateStatus(id, newStatus) {
+            if (!newStatus) return;
+            await fetch(`/api/staff/reservations/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            loadReservations();
+        }
+
+        loadReservations();
+    </script>
+</body>
+</html>
